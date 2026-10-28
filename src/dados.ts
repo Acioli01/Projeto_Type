@@ -1,27 +1,27 @@
 import type { Tarefa } from "./tipos";
 export const tarefas: Tarefa[] = [
     {
-        id: 1, titulo: "Estudar interfaces", prioridade: "alta", status: "quero ver",
+        id: 1, titulo: "Star Wars 3 A Vingaça dos Sith", prioridade: "alta", status: "quero ver", genero: "Filme",
         tags: ["estudo", "ts"], criadaEm: new Date()
     },
     {
-        id: 2, titulo: "Comprar café", prioridade: "baixa", status: "quero ver",
+        id: 2, titulo: "Dexter", prioridade: "baixa", status: "assisti", genero: "Série",
         tags: ["casa"], criadaEm: new Date()
     },
     {
-        id: 3, titulo: "Revisar pull request", descricao: "PR #42", prioridade: "alta",
-        status: "assisti", tags: ["trabalho"], criadaEm: new Date()
+        id: 3, titulo: "Breaking Bead", descricao: "PR #42", prioridade: "alta", genero: "Série",
+        status: "quero ver", tags: ["trabalho"], criadaEm: new Date()
     },
     {
-        id: 4, titulo: "Praticar laços", prioridade: "media", status: "assistindo",
+        id: 4, titulo: "SmallVille", prioridade: "media", status: "quero ver", genero: "Série",
         tags: ["estudo", "ts"], criadaEm: new Date()
     },
     {
-        id: 5, titulo: "Agendar dentista", prioridade: "media", status: "assistindo",
+        id: 5, titulo: "Vingadores Doomsday", prioridade: "alta", status: "quero ver", genero: "Filme",
         tags: ["saude"], criadaEm: new Date()
     },
     {
-        id: 6, titulo: "Organizar a mesa", prioridade: "baixa", status: "assisti",
+        id: 6, titulo: "Harry Potter", prioridade: "baixa", status: "assisti",genero: "Filme",
         tags: ["casa"], criadaEm: new Date()
     },
 ];

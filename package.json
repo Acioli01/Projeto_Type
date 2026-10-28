@@ -1,5 +1,5 @@
 {
-  "name": "taskflow_aula1_arquivos_iniciais",
+  "name": "Projeto_Type",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,7 +11,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "typescript": "^7.0.2",
     "vite": "^8.3.5"

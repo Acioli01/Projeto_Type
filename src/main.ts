@@ -1,12 +1,16 @@
 import { campo, elemento, selecao } from "./dom";
 import { tarefas } from "./dados";
-import type { Prioridade, Tarefa } from "./tipos";
+import type { Genero, Prioridade, Tarefa } from "./tipos";
 import { adicionarTarefa, transformar } from "./servicos";
-elemento("nome-do-sistema").textContent = "TaskFlow";
+elemento("nome-do-sistema").textContent = "Filmes e Séries";
 elemento("versao").textContent = "v0.2.0";
 elemento("data-de-hoje").textContent = new Date().toLocaleDateString("pt-BR");
+
+
 // O estado do programa: a lista que está valendo agora
+
 const lista: Tarefa[] = [...tarefas];
+
 // Uma tarefa vira um <li> pronto para a tela
 function criarItem(tarefa: Tarefa): HTMLLIElement {
     const item = document.createElement("li");
@@ -20,6 +24,8 @@ function criarItem(tarefa: Tarefa): HTMLLIElement {
     item.append(titulo, etiqueta);
     return item;
 }
+
+
 // A função que desenha a tela inteira a partir da lista
 function desenhar(): void {
     const itens = transformar(lista, criarItem); // a SUA função de alta ordem
@@ -32,6 +38,7 @@ function desenhar(): void {
     }
     elemento("total").textContent = String(lista.length);
     elemento("pendentes").textContent = String(pendentes);
+
 }
 // O formulário: a função abaixo é um CALLBACK — quem a chama é o navegador
 elemento("formulario").addEventListener("submit", (evento) => {
@@ -41,8 +48,10 @@ elemento("formulario").addEventListener("submit", (evento) => {
         adicionarTarefa(lista, {
             titulo: campo("titulo").value.trim(),
             prioridade: selecao("prioridade").value as Prioridade,
+            genero: selecao("genero").value as Genero,
             tags: [],
         });
+
         campo("titulo").value = "";
         desenhar(); // mudou a lista? desenhe de novo
     } catch (erro) {
@@ -51,4 +60,4 @@ elemento("formulario").addEventListener("submit", (evento) => {
         }
     }
 });
-desenhar ();
+desenhar();
