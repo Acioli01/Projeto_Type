@@ -26,7 +26,7 @@ function desenhar(): void {
     elemento("lista").replaceChildren(...itens);
     let pendentes = 0;
     for (const tarefa of lista) {
-        if (tarefa.status === "pendente") {
+        if (tarefa.status === "quero ver") {
             pendentes++;
         }
     }

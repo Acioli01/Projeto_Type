@@ -17,7 +17,7 @@ export function adicionarTarefa(lista: Tarefa[], dados: NovaTarefa): Tarefa {
     const tarefa: Tarefa = {
         ...dados,
         id: gerarId(lista),
-        status: "pendente",
+        status: "quero ver",
         criadaEm: new Date(),
     };
     lista.push(tarefa);
