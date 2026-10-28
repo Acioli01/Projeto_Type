@@ -1,3 +1,5 @@
+
+
 import { campo, elemento, selecao } from "./dom";
 import { tarefas } from "./dados";
 import type { Genero, Prioridade, Tarefa } from "./tipos";
@@ -17,7 +19,7 @@ function criarItem(tarefa: Tarefa): HTMLLIElement {
     item.className = `tarefa tarefa--${tarefa.prioridade}`;
     const titulo = document.createElement("h3");
     titulo.className = "tarefa__titulo";
-    titulo.textContent = `#${tarefa.id} ${tarefa.titulo}`;
+    titulo.textContent = `#${tarefa.id} ${tarefa.titulo} (${tarefa.genero})`;
     const etiqueta = document.createElement("span");
     etiqueta.className = `etiqueta etiqueta--${tarefa.prioridade}`;
     etiqueta.textContent = tarefa.prioridade;
