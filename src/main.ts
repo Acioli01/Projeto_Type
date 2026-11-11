@@ -1,65 +1,94 @@
-
-
 import { campo, elemento, selecao } from "./dom";
-import { tarefas } from "./dados";
+import { buscarTitulo, listarTitulos } from "./api";
 import type { Genero, Prioridade, Tarefa } from "./tipos";
-import { adicionarTarefa, transformar } from "./servicos";
+import { adicionarTarefa } from "./servicos";
+
 elemento("nome-do-sistema").textContent = "Filmes e Séries";
-elemento("versao").textContent = "v0.2.0";
+elemento("versao").textContent = "v0.3.0";
 elemento("data-de-hoje").textContent = new Date().toLocaleDateString("pt-BR");
 
+// Começa vazia: quem preenche é a API (e por isso é let, não const)
+let lista: Tarefa[] = [];
 
-// O estado do programa: a lista que está valendo agora
-
-const lista: Tarefa[] = [...tarefas];
-
-// Uma tarefa vira um <li> pronto para a tela
 function criarItem(tarefa: Tarefa): HTMLLIElement {
-    const item = document.createElement("li");
-    item.className = `tarefa tarefa--${tarefa.prioridade}`;
-    const titulo = document.createElement("h3");
-    titulo.className = "tarefa__titulo";
-    titulo.textContent = `#${tarefa.id} ${tarefa.titulo} (${tarefa.genero})`;
-    const etiqueta = document.createElement("span");
-    etiqueta.className = `etiqueta etiqueta--${tarefa.prioridade}`;
-    etiqueta.textContent = tarefa.prioridade;
-    item.append(titulo, etiqueta);
-    return item;
+  const item = document.createElement("li");
+  item.className = `tarefa tarefa--${tarefa.prioridade}`;
+
+  const titulo = document.createElement("h3");
+  titulo.className = "tarefa__titulo";
+  titulo.textContent = `#${tarefa.id} ${tarefa.titulo} (${tarefa.genero})`;
+
+  const meta = document.createElement("div");
+  meta.className = "tarefa__meta";
+
+  const etiqueta = document.createElement("span");
+  etiqueta.className = `etiqueta etiqueta--${tarefa.prioridade}`;
+  etiqueta.textContent = tarefa.prioridade;
+
+  const situacao = document.createElement("span");
+  situacao.className = "etiqueta etiqueta--status";
+  situacao.textContent = tarefa.status; // quero ver, assistindo ou assisti
+
+  // map de novo: cada gênero (por enquanto, as tags) vira um <span>
+  const tags = tarefa.tags.map((tag) => {
+    const elementoTag = document.createElement("span");
+    elementoTag.className = "tag";
+    elementoTag.textContent = tag;
+    return elementoTag;
+  });
+
+  meta.append(etiqueta, situacao, ...tags);
+  item.append(titulo, meta);
+  return item;
 }
 
-
-// A função que desenha a tela inteira a partir da lista
 function desenhar(): void {
-    const itens = transformar(lista, criarItem); // a SUA função de alta ordem
-    elemento("lista").replaceChildren(...itens);
-    let pendentes = 0;
-    for (const tarefa of lista) {
-        if (tarefa.status === "quero ver") {
-            pendentes++;
-        }
-    }
-    elemento("total").textContent = String(lista.length);
-    elemento("pendentes").textContent = String(pendentes);
-
+  // map: o seu transformar da Aula 2, que já vem pronto
+  elemento("lista").replaceChildren(...lista.map(criarItem));
+  // filter: só os que ainda estão na fila ("quero ver" é o "Pendentes" da tela)
+  const pendentes = lista.filter((t) => t.status === "quero ver");
+  elemento("total").textContent = String(lista.length);
+  elemento("pendentes").textContent = String(pendentes.length);
 }
-// O formulário: a função abaixo é um CALLBACK — quem a chama é o navegador
-elemento("formulario").addEventListener("submit", (evento) => {
-    evento.preventDefault(); // sem isto, a página recarrega e tudo se perde
-    elemento("erro").textContent = "";
-    try {
-        adicionarTarefa(lista, {
-            titulo: campo("titulo").value.trim(),
-            prioridade: selecao("prioridade").value as Prioridade,
-            genero: selecao("genero").value as Genero,
-            tags: [],
-        });
 
-        campo("titulo").value = "";
-        desenhar(); // mudou a lista? desenhe de novo
-    } catch (erro) {
-        if (erro instanceof Error) {
-            elemento("erro").textContent = erro.message;
-        }
+// O cadastro ainda grava só na tela. Na Aula 4 ele vai para o banco.
+elemento("formulario").addEventListener("submit", (evento) => {
+  evento.preventDefault();
+  elemento("erro").textContent = "";
+  try {
+    adicionarTarefa(lista, {
+      titulo: campo("titulo").value.trim(),
+      prioridade: selecao("prioridade").value as Prioridade,
+      genero: selecao("genero").value as Genero, // Filme ou Série
+      tags: [],
+    });
+    campo("titulo").value = "";
+    desenhar();
+  } catch (erro) {
+    if (erro instanceof Error) {
+      elemento("erro").textContent = erro.message;
     }
+  }
 });
-desenhar();
+
+// O começo do programa: busca no banco, depois desenha
+async function iniciar(): Promise<void> {
+  try {
+    lista = await listarTitulos();
+    desenhar();
+
+    // find no banco: pode não encontrar
+    const procurado = await buscarTitulo(3);
+    if (procurado) {
+      console.log(`Encontrado: ${procurado.titulo}`);
+    } else {
+      console.log("Título #3 não existe.");
+    }
+  } catch (erro) {
+    if (erro instanceof Error) {
+      elemento("erro").textContent = erro.message;
+    }
+  }
+}
+
+iniciar();
