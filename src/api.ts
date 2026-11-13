@@ -1,25 +1,40 @@
-import type { Tarefa } from "./tipos";
+import type { NovaTarefa, Status, Tarefa } from "./tipos";
 
-// Todos os títulos (filmes e séries) que estão no banco
-export async function listarTitulos(): Promise<Tarefa[]> {
-  const resposta = await fetch("/api/titulos");
+// A ajudante que todas as chamadas usam: monta o pedido e trata o erro
+async function enviar(metodo: string, url: string, corpo?: unknown): Promise<Response> {
+  const resposta = await fetch(url, {
+    method: metodo,
+    headers: { "Content-Type": "application/json" },
+    body: corpo === undefined ? undefined : JSON.stringify(corpo),
+  });
   if (!resposta.ok) {
-    throw new Error("Não foi possível carregar os títulos. A API está rodando?");
+    // a API manda { erro: "..." }; se não mandar, usamos o código
+    const dados = (await resposta.json().catch(() => ({}))) as { erro?: string };
+    throw new Error(dados.erro ?? `Erro ${resposta.status}`);
   }
-  const bruto = (await resposta.json()) as Tarefa[];
-  // JSON não tem data: criadaEm chega como texto e precisa virar Date
-  return bruto.map((t) => ({ ...t, criadaEm: new Date(t.criadaEm) }));
+  return resposta;
 }
 
-// Um título: devolve undefined se ele não existir (o mesmo padrão do find)
-export async function buscarTitulo(id: number): Promise<Tarefa | undefined> {
-  const resposta = await fetch(`/api/titulos/${id}`);
-  if (resposta.status === 404) {
-    return undefined;
-  }
-  if (!resposta.ok) {
-    throw new Error(`Erro ${resposta.status} ao buscar o título #${id}.`);
-  }
-  const bruto = (await resposta.json()) as Tarefa;
-  return { ...bruto, criadaEm: new Date(bruto.criadaEm) };
+// JSON não tem data: criadaEm chega como texto e precisa virar Date
+function converter(titulo: Tarefa): Tarefa {
+  return { ...titulo, criadaEm: new Date(titulo.criadaEm) };
+}
+
+export async function listarTitulos(): Promise<Tarefa[]> {
+  const resposta = await enviar("GET", "/api/titulos");
+  const bruto = (await resposta.json()) as Tarefa[];
+  return bruto.map(converter);
+}
+
+export async function cadastrarTitulo(dados: NovaTarefa): Promise<Tarefa> {
+  const resposta = await enviar("POST", "/api/titulos", dados);
+  return converter((await resposta.json()) as Tarefa);
+}
+
+export async function alterarStatus(id: number, status: Status): Promise<void> {
+  await enviar("PATCH", `/api/titulos/${id}/status`, { status });
+}
+
+export async function removerTitulo(id: number): Promise<void> {
+  await enviar("DELETE", `/api/titulos/${id}`);
 }
