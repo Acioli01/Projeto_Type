@@ -12,3 +12,8 @@ export interface Tarefa {
     criadaEm: Date;
 }
 export type NovaTarefa =Omit<Tarefa, "id" | "status" | "criadaEm">;
+// NOVO: quem está logado. A API devolve isto no login.
+export interface Sessao {
+token: string;
+nome: string;
+}

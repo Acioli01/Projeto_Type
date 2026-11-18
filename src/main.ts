@@ -1,9 +1,19 @@
 import { campo, elemento, selecao } from "./dom";
-import { alterarStatus, cadastrarTitulo, listarTitulos, removerTitulo } from "./api";
+import {
+  alterarStatus,
+  cadastrarTitulo,
+  criarConta,
+  encerrarSessao,
+  entrar,
+  guardarSessao,
+  listarTitulos,
+  removerTitulo,
+  sessaoAtual,
+} from "./api";
 import type { Genero, Prioridade, Status, Tarefa } from "./tipos";
 
 elemento("nome-do-sistema").textContent = "Filmes e Séries";
-elemento("versao").textContent = "v0.4.0";
+elemento("versao").textContent = "v0.5.0";
 elemento("data-de-hoje").textContent = new Date().toLocaleDateString("pt-BR");
 
 let lista: Tarefa[] = [];
@@ -15,12 +25,12 @@ function mostrarErro(erro: unknown): void {
 // Uma ajudante para criar botões sem repetir código
 function botao(texto: string, extra: string, aoClicar: () => void): HTMLButtonElement {
   const elementoBotao = document.createElement("button");
-    elementoBotao.type = "button";
-    elementoBotao.className = `botao botao--pequeno ${extra}`;
-    elementoBotao.textContent = texto;
-    elementoBotao.addEventListener("click", aoClicar); // callback, de novo
-    return elementoBotao;
-  }
+  elementoBotao.type = "button";
+  elementoBotao.className = `botao botao--pequeno ${extra}`;
+  elementoBotao.textContent = texto;
+  elementoBotao.addEventListener("click", aoClicar); // callback, de novo
+  return elementoBotao;
+}
 
 function criarItem(titulo: Tarefa): HTMLLIElement {
   const item = document.createElement("li");
@@ -46,8 +56,15 @@ function criarItem(titulo: Tarefa): HTMLLIElement {
   situacao.className = "etiqueta etiqueta--status";
   situacao.textContent = titulo.status; // quero ver, assistindo ou assisti
 
-  meta.append(etiqueta, situacao);
-  principal.append(nome, meta);
+   // map de novo: cada gênero vira um <span>
+  const generos = titulo.tags.map((tag) => {
+    const elementoTag = document.createElement("span");
+    elementoTag.className = "tag";
+    elementoTag.textContent = tag;
+    return elementoTag;
+  });
+
+  meta.append(etiqueta, situacao, ...generos);
 
   // Os botões: cada um fecha sobre o SEU título
   const acoes = document.createElement("div");
@@ -114,7 +131,70 @@ elemento("formulario").addEventListener("submit", async (evento) => {
   }
 });
 
+// ---------- A tela de entrada (Aula 5) ----------
+function mostrarErroEntrada(erro: unknown): void {
+  const mensagem = erro instanceof Error ? erro.message : "Erro inesperado.";
+  elemento("erro-entrada").textContent = mensagem;
+}
+
+// Troca entre "Entrar" e "Criar conta"
+function mostrarFormulario(criando: boolean): void {
+  elemento("form-criar").hidden = !criando;
+  elemento("form-entrar").hidden = criando;
+  elemento("alternar-entrada").textContent = criando
+    ? "Já tenho conta"
+    : "Ainda não tenho conta";
+  elemento("erro-entrada").textContent = "";
+}
+
+elemento("alternar-entrada").addEventListener("click", () => {
+  mostrarFormulario(elemento("form-criar").hidden === true); // escondido? então mostra
+});
+
+elemento("form-entrar").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  try {
+    guardarSessao(await entrar(campo("entrar-email").value, campo("entrar-senha").value));
+    campo("entrar-senha").value = "";
+    await iniciar();
+  } catch (erro) {
+    mostrarErroEntrada(erro);
+  }
+});
+
+elemento("form-criar").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const email = campo("criar-email").value;
+  const senha = campo("criar-senha").value;
+  try {
+    await criarConta(campo("criar-nome").value, email, senha);
+    guardarSessao(await entrar(email, senha)); // criou? já entra direto
+    (elemento("form-criar") as HTMLFormElement).reset(); // não deixa a senha no campo
+    await iniciar();
+  } catch (erro) {
+    mostrarErroEntrada(erro);
+  }
+});
+
+elemento("botao-sair").addEventListener("click", () => {
+  encerrarSessao();
+  lista = [];
+  (elemento("form-entrar") as HTMLFormElement).reset();
+  mostrarFormulario(false); // volta sempre para "Entrar"
+  iniciar();
+});
+
+// ---------- O começo: com sessão, mostra o sistema; sem, a entrada ----------
 async function iniciar(): Promise<void> {
+  const sessao = sessaoAtual();
+  elemento("tela-entrada").hidden = sessao !== undefined;
+  elemento("tela-app").hidden = sessao === undefined;
+  elemento("botao-sair").hidden = sessao === undefined;
+  elemento("usuario-nome").textContent = sessao?.nome ?? "";
+  if (!sessao) {
+    return;
+  }
+  elemento("erro-entrada").textContent = "";
   try {
     lista = await listarTitulos();
     desenhar();
