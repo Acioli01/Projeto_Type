@@ -65,7 +65,7 @@ function criarItem(titulo: Tarefa): HTMLLIElement {
   });
 
   meta.append(etiqueta, situacao, ...generos);
-
+  principal.append(nome, meta);
   // Os botões: cada um fecha sobre o SEU título
   const acoes = document.createElement("div");
   acoes.className = "tarefa__acoes";

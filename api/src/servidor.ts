@@ -59,6 +59,23 @@ function validar(dados: DadosTitulo): string | undefined {
   return undefined;
 }
 
+// ---------- O PAINEL: o GROUP BY faz o que o reduce fazia no front ----------
+app.get("/api/estatisticas", exigirLogin, async (_req, res) => {
+  const [linhas] = await banco.execute<RowDataPacket[]>(
+    `SELECT status, COUNT(*) AS quantidade
+       FROM titulos
+      WHERE usuario_id = ?
+      GROUP BY status`,
+    [usuarioDe(res)]
+  );
+  // começa com zeros: o GROUP BY não devolve linha para status sem título
+  const contagem: Record<Status, number> = { "quero ver": 0, assistindo: 0, assisti: 0 };
+  for (const linha of linhas) {
+    contagem[linha.status as Status] = Number(linha.quantidade);
+  }
+  res.json(contagem);
+});
+
 // ---------- USUÁRIOS (Aula 5) ----------
 app.post("/api/usuarios", async (req, res) => {
   const { nome, email, senha } = req.body as { nome?: string; email?: string; senha?: string };
@@ -104,21 +121,24 @@ app.post("/api/login", async (req, res) => {
 // ---------- DAQUI PARA BAIXO, SÓ COM LOGIN ----------
 
 // ---------- LER ----------
-app.get("/api/titulos", exigirLogin, async (_req, res) => {
-  const [linhas] = await banco.execute<RowDataPacket[]>(
-    `${SELECT_TITULOS} WHERE t.usuario_id = ? ORDER BY t.id`,
-    [usuarioDe(res)]
-  );
-  res.json(linhas.map(paraTitulo));
-});
+// Filtros opcionais na URL: /api/titulos?status=quero%20ver&busca=dex
+app.get("/api/titulos", exigirLogin, async (req, res) => {
+  let sql = `${SELECT_TITULOS} WHERE t.usuario_id = ?`;
+  const valores: (string | number)[] = [usuarioDe(res)];
 
-app.get("/api/titulos/:id", exigirLogin, async (req, res) => {
-  const titulo = await buscarUm(Number(req.params.id), usuarioDe(res));
-  if (!titulo) {
-    res.status(404).json({ erro: `Título #${req.params.id} não encontrado.` });
-    return;
+  const { status, busca } = req.query;
+  if (typeof status === "string" && STATUS.includes(status as Status)) {
+    sql += " AND t.status = ?"; // o filter, no banco
+    valores.push(status);
   }
-  res.json(titulo);
+  if (typeof busca === "string" && busca.trim() !== "") {
+    sql += " AND t.nome LIKE ?"; // o includes, no banco
+    valores.push(`%${busca.trim()}%`);
+  }
+  sql += " ORDER BY FIELD(t.prioridade, 'alta', 'media', 'baixa'), t.nome"; // o sort
+
+  const [linhas] = await banco.execute<RowDataPacket[]>(sql, valores);
+  res.json(linhas.map(paraTitulo));
 });
 
 // ---------- CRIAR ----------

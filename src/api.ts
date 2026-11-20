@@ -1,5 +1,4 @@
-import type { NovaTarefa, Sessao, Status, Tarefa } from "./tipos";
-
+import type { Contagem, NovaTarefa, Sessao, Status, Tarefa } from "./tipos";
 const CHAVE_SESSAO = "filmesseries:sessao";
 
 // ---------- A sessão: o "crachá" guardado no navegador ----------
@@ -72,7 +71,11 @@ export async function alterarStatus(id: number, status: Status): Promise<void> {
 export async function removerTitulo(id: number): Promise<void> {
   await enviar("DELETE", `/api/titulos/${id}`);
 }
-
+// NOVO: os números do painel, calculados pelo banco com GROUP BY
+export async function buscarEstatisticas(): Promise<Contagem> {
+  const resposta = await enviar("GET", "/api/estatisticas");
+  return (await resposta.json()) as Contagem;
+}
 // ---------- Usuários ----------
 export async function entrar(email: string, senha: string): Promise<Sessao> {
   const resposta = await enviar("POST", "/api/login", { email, senha });
